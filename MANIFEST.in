@@ -1,0 +1,9 @@
+include *.txt
+include setup.cfg
+include setup.py
+include whtc/__init__.py
+include whtc/recipe/__init__.py
+include whtc/recipe/configmanager/*.py
+include whtc/recipe/configmanager/README.txt
+include whtc/recipe/configmanager/testdata/MASTER*
+include whtc/recipe/configmanager/testdata/TEMPLATE.IN 

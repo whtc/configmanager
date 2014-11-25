@@ -1,0 +1,7 @@
+Change History
+**************
+
+1.0rc1
+======
+
+- Initial public release.
