@@ -128,6 +128,7 @@ class Recipe:
 
         self.comment = options.get('comment', DEFAULT_COMMENT).strip()
         self.insert_after = options.get('insert-after', '').strip()
+        self.replace = options.get('replace', '').strip()
         
         # Process these so the defaults are stored for uninstall 
         self.strict = _query_bool(self.options, 'strict', default='false')
@@ -313,14 +314,29 @@ class Recipe:
         contents = _remove_sections(sections, contents)
 
         # Look for an insertion point, otherwise append
+        insert_match = None
         insert_index = len(contents)
-        if self.insert_after:
-            pattern = re.compile(self.insert_after)
+        # First, do we have a line we want to replace?
+        if self.replace:
+            replace_pattern = re.compile(self.replace)
             for index, line in enumerate(contents):
-                match = pattern.search(line)
-                if match:
+                insert_match = replace_pattern.search(line)
+                if insert_match:
+                    contents[index] = ''
+                    insert_index = index
+                    break;
+
+        # Look for a point to insert after, either on its own or if
+        # insert_replace tried but didn't find anything
+        if self.insert_after and not insert_match:
+            insert_pattern = re.compile(self.insert_after)
+            for index, line in enumerate(contents):
+                insert_match = insert_pattern.search(line)
+                if insert_match: 
                     insert_index = index + 1
                     break;
+
+        # Insert our section
         contents[insert_index:insert_index] = self.section_contents
 
         target = open(self.target, 'w')

@@ -5,7 +5,7 @@ from setuptools import (
     )
 
 name="whtc.recipe.configmanager"
-version = '1.0rc1'
+version = '1.1'
 tests_require=[
     'zope.testing', 
     'zc.buildout',
@@ -34,7 +34,7 @@ setup(
         '********\n'
         ),
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Framework :: Buildout :: Recipe",
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",

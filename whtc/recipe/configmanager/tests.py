@@ -13,9 +13,7 @@ from zope.testing import doctest, renormalizing
 
 import collective.recipe.template
 
-optionflags =  (doctest.ELLIPSIS |
-                doctest.NORMALIZE_WHITESPACE |
-                doctest.REPORT_ONLY_FIRST_FAILURE)
+optionflags =  (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
 def _remove_test_files(test):
     test_path = os.path.join(os.path.dirname(test.filename), 'testdata')

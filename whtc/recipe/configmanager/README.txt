@@ -85,7 +85,7 @@ Supported options
     caveats).
     
     **Default:** True
-
+    
 ``insert-after``
     
     A regex pattern to look for in the target file. If found, the section 
@@ -93,10 +93,25 @@ Supported options
     uses search, not match, so it will match the pattern anywhere in the 
     line. If whitespace or the location of the pattern in the line is 
     important, structure your regex accordingly. If the pattern is not found,
-    the section will be appended to the end of the file, as usual.on
+    the section will be appended to the end of the file, as usual.
 
     **Default:** None   
     
+``replace``
+    
+    A regex pattern to look for in the target file. If found, this line will 
+    be replaced by the section contents and markers. The regex 
+    uses search, not match, so it will match the pattern anywhere in the 
+    line. If whitespace or the location of the pattern in the line is 
+    important, structure your regex accordingly. 
+    
+    If the pattern is not found, and ``insert-after`` was defined, that will 
+    be will will be used to look for an insertion point. If ``insert-after`` 
+    fails or was not defined, the section will be appended to the end of the 
+    file, as usual.
+    
+    **Default:** None   
+
 ``start-marker``
     
     A line that marks the beginning of an auto-generated section. It should
@@ -313,7 +328,120 @@ We should now have everything we had before, but with 'five = 5' replaced by
     True
     >>> 'two = 2' in contents
     True
+    
+We can also look for a specific point to insert our contents:    
 
+    >>> write(
+    ... 'buildout.cfg',
+    ... """
+    ... [buildout]
+    ... newest = false
+    ... parts = config
+    ...
+    ... [config]
+    ... recipe = whtc.recipe.configmanager
+    ... target = %s
+    ... comment = 
+    ... insert-after = two.*=.*
+    ... section =
+    ...     seven = 7
+    ...     eight = 8
+    ... """ % (target_file)
+    ... )
+    >>> print system(buildout)
+    Uninstalling...
+
+And we see that our section comes after ``two = 2`` and before `three = 3``:
+    >>> target = open(target_file, 'r')
+    >>> contents = target.read()
+    >>> target.close()
+    >>> two_index = contents.find('two =')
+    >>> three_index = contents.find('three =')
+    >>> seven_index = contents.find('seven =')
+    >>> two_index < three_index 
+    True
+    >>> two_index < seven_index 
+    True
+    >>> three_index > seven_index
+    True        
+    
+And we can use insert-after if replace doesn't find anything:    
+    >>> write(
+    ... 'buildout.cfg',
+    ... """
+    ... [buildout]
+    ... newest = false
+    ... parts = config
+    ...
+    ... [config]
+    ... recipe = whtc.recipe.configmanager
+    ... target = %s
+    ... comment = 
+    ... replace = zero.*=.*
+    ... insert-after = two.*=.*
+    ... section =
+    ...     nine = 9
+    ...     ten = 10
+    ... """ % (target_file)
+    ... )
+    >>> print system(buildout)
+    Uninstalling...    
+
+And our section still comes after ``two = 2`` and before `three = 3``:
+    >>> target = open(target_file, 'r')
+    >>> contents = target.read()
+    >>> target.close()
+    >>> two_index = contents.find('two =')
+    >>> three_index = contents.find('three =')
+    >>> nine_index = contents.find('nine =')
+    >>> two_index < three_index 
+    True
+    >>> two_index < nine_index 
+    True
+    >>> three_index > nine_index
+    True        
+    
+We can replace an existing line in a file:
+
+    >>> write(
+    ... 'buildout.cfg',
+    ... """
+    ... [buildout]
+    ... newest = false
+    ... parts = config
+    ...
+    ... [config]
+    ... recipe = whtc.recipe.configmanager
+    ... target = %s
+    ... comment = 
+    ... replace = two.*=.*
+    ... section =
+    ...     eleven = 11
+    ...     twelve = 12
+    ... """ % (target_file)
+    ... )
+    >>> target = open(target_file, 'r')
+    >>> contents = target.read()
+    >>> target.close()
+    >>> original_two_index = contents.find('two =')
+    >>> print system(buildout)
+    Uninstalling...
+    
+And now our section replaces ``two = 2``
+    >>> target = open(target_file, 'r')
+    >>> contents = target.read()
+    >>> target.close()
+    >>> two_index = contents.find('two =')
+    >>> three_index = contents.find('three =')
+    >>> begin_index = contents.find('# BEGIN')
+    >>> eleven_index = contents.find('eleven =')
+    >>> two_index == -1
+    True
+    >>> begin_index == original_two_index
+    True
+    >>> eleven_index < three_index 
+    True    
+      
 We can also supply custom section markers:
 
     >>> write(
@@ -330,8 +458,7 @@ We can also supply custom section markers:
     ... end-marker = /*FINISH: ${:_buildout_section_name_}*/
     ... comment = 
     ... section =
-    ...     four = 4
-    ...     nine = 9
+    ...     thirteen = 13
     ... """ % (target_file)
     ... )
     >>> print system(buildout)
@@ -349,42 +476,6 @@ And we see our markers have changed
     >>> '/*START: config*/' in contents
     True
     >>> '/*FINISH: config*/' in contents
-    True
-
-We can also look for a specific point to insert our contents:    
-
-    >>> write(
-    ... 'buildout.cfg',
-    ... """
-    ... [buildout]
-    ... newest = false
-    ... parts = config
-    ...
-    ... [config]
-    ... recipe = whtc.recipe.configmanager
-    ... target = %s
-    ... start-marker = /*START: ${:_buildout_section_name_}*/
-    ... end-marker = /*FINISH: ${:_buildout_section_name_}*/
-    ... comment = 
-    ... insert-after = two.*=.*
-    ... section =
-    ...     four = 4
-    ...     nine = 9
-    ... """ % (target_file)
-    ... )
-    >>> print system(buildout)
-    Uninstalling...
-    
-And now our section comes after ``two = 2`` and before `three = 3``:
-    >>> target = open(target_file, 'r')
-    >>> contents = target.read()
-    >>> target.close()
-    >>> two_index = contents.find('two =')
-    >>> three_index = contents.find('three =')
-    >>> four_index = contents.find('four =')
-    >>> two_index < three_index 
-    True
-    >>> three_index > four_index
     True
     
 Our section contents can come from a file:
@@ -419,7 +510,7 @@ And our file now contains the settings from the input file:
     >>> target.close()
     >>> '# six' in contents
     False
-    >>> 'seven = 7' in contents
+    >>> 'fourteen = 14' in contents
     True
     >>> '// This' in contents
     True
@@ -469,8 +560,8 @@ output file will be created:
     ... [template]
     ... input = %s
     ... output = %s
-    ... nine-var = 9
-    ... ten-var = 10
+    ... sixteen-var = 16
+    ... seventeen-var = 17
     ...    
     ... [config]
     ... recipe = whtc.recipe.configmanager
@@ -492,7 +583,7 @@ inserted:
     >>> target.close()
     >>> '# seven' in contents
     False
-    >>> 'nine = 9' in contents
+    >>> 'sixteen = 16' in contents
     True
     >>> '// Test template' in contents
     True
@@ -518,8 +609,8 @@ created:
     ... recipe = collective.recipe.template
     ... input = %s
     ... output = %s
-    ... nine-var = 9
-    ... ten-var = 10
+    ... sixteen-var = 16
+    ... seventeen-var = 17
     ...    
     ... [config]
     ... recipe = whtc.recipe.configmanager
@@ -563,8 +654,8 @@ we will create it (unless you specify ``create = false``):
     ... end-marker = /*FINISH: ${:_buildout_section_name_}*/
     ... comment = 
     ... section =
-    ...     ten = 10
-    ...     eleven = 11
+    ...     eighteen = 18
+    ...     nineteen = 19
     ... """ % (target_file)
     ... )
     >>> print system(buildout)
@@ -577,7 +668,7 @@ Our file has our data, but nothing else:
     >>> target.close()
     >>> 'one' in contents
     False
-    >>> 'ten' in contents
+    >>> 'eighteen' in contents
     True
     
 Finally, our section will be removed if the part is uninstalled. If the
