@@ -396,12 +396,17 @@ def uninstall(name, options):
             backup
             )
     
+    target = None
     if contents:
-        target = open(options['target'], 'w')
-        for line in contents:
-            target.write("%s\n" % line)
-        target.close()
+        try:
+            target = open(options['target'], 'w')
+            for line in contents:
+                target.write("%s\n" % line)
+        finally:
+            if target:
+                target.close()
+            raise
     else:
-        os.remove(target)
+        os.remove(options['target'])
 
  

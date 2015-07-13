@@ -1,6 +1,10 @@
 Change History
 **************
 
+1.1.1
+=====
+- Fixed bug when attempting to remove a file when contents would be empty
+
 1.1
 ======
 
