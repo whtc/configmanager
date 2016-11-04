@@ -402,10 +402,11 @@ def uninstall(name, options):
             target = open(options['target'], 'w')
             for line in contents:
                 target.write("%s\n" % line)
+        except Exception:
+            raise
         finally:
             if target:
                 target.close()
-            raise
     else:
         os.remove(options['target'])
 
