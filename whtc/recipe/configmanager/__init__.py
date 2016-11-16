@@ -311,30 +311,34 @@ class Recipe:
             self.strict,
             self.logger
             )        
-        contents = _remove_sections(sections, contents)
+        
+        if sections:
+            # If we found a section, then simply insert in its place
+            insert_index = sections[0][0]
+            contents = _remove_sections(sections, contents)
+        else:
+            # Look for an insertion point, otherwise append
+            insert_index = len(contents)
+            insert_match = None
+            # First, do we have a line we want to replace?
+            if self.replace:
+                replace_pattern = re.compile(self.replace)
+                for index, line in enumerate(contents):
+                    insert_match = replace_pattern.search(line)
+                    if insert_match:
+                        contents[index] = ''
+                        insert_index = index
+                        break;
 
-        # Look for an insertion point, otherwise append
-        insert_match = None
-        insert_index = len(contents)
-        # First, do we have a line we want to replace?
-        if self.replace:
-            replace_pattern = re.compile(self.replace)
-            for index, line in enumerate(contents):
-                insert_match = replace_pattern.search(line)
-                if insert_match:
-                    contents[index] = ''
-                    insert_index = index
-                    break;
-
-        # Look for a point to insert after, either on its own or if
-        # insert_replace tried but didn't find anything
-        if self.insert_after and not insert_match:
-            insert_pattern = re.compile(self.insert_after)
-            for index, line in enumerate(contents):
-                insert_match = insert_pattern.search(line)
-                if insert_match: 
-                    insert_index = index + 1
-                    break;
+            # Look for a point to insert after, either on its own or if
+            # insert_replace tried but didn't find anything
+            if self.insert_after and not insert_match:
+                insert_pattern = re.compile(self.insert_after)
+                for index, line in enumerate(contents):
+                    insert_match = insert_pattern.search(line)
+                    if insert_match: 
+                        insert_index = index + 1
+                        break;
 
         # Insert our section
         contents[insert_index:insert_index] = self.section_contents

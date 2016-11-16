@@ -3,14 +3,13 @@ Run whtc.recipe.configmanager doc tests
 """
 __docformat__ = 'restructuredtext'
 
+import doctest
 import errno
 import os
 import unittest
 
 import zc.buildout.testing
-
-from zope.testing import doctest, renormalizing
-
+from zope.testing import renormalizing
 import collective.recipe.template
 
 optionflags =  (doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
